@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Src/" />
+  <Folder Name="/Src/Api/">
+    <Project Path="FireBranchDev.MyLibrary.Api/FireBranchDev.MyLibrary.Api.csproj" Id="ba546308-1e43-45c6-bfbc-3d5e137055ed" />
+  </Folder>
+  <Folder Name="/Src/Core/">
+    <Project Path="FireBranchDev.MyLibrary.Application/FireBranchDev.MyLibrary.Application.csproj" />
+    <Project Path="FireBranchDev.MyLibrary.Domain/FireBranchDev.MyLibrary.Domain.csproj" />
+    <Project Path="FireBranchDev.MyLibrary.Persistence/FireBranchDev.MyLibrary.Persistence.csproj" Id="46bc828b-1e00-4079-af76-42097d0c7e40" />
+  </Folder>
+  <Folder Name="/Src/Infrastructure/" />
+  <Folder Name="/Test/" />
+</Solution>
