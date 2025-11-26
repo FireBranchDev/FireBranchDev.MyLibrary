@@ -2,6 +2,7 @@
 using FireBranchDev.MyLibrary.Application.Exceptions;
 using FireBranchDev.MyLibrary.Application.Features.Book.Queries.GetBooksList;
 using FireBranchDev.MyLibrary.Application.Features.Books.Commands.CreateBook;
+using FireBranchDev.MyLibrary.Application.Features.Books.Commands.DeleteBook;
 using FireBranchDev.MyLibrary.Application.Features.Books.Commands.UpdateBook;
 using JsonApiSerializer.JsonApi;
 using MediatR;
@@ -195,5 +196,31 @@ public class BooksController(IMediator mediator) : JsonApiControllerBase
 
             return NotFound(documentRoot);
         }
+    }
+
+    [HttpDelete("{bookId:int}", Name = "DeleteBook")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(DocumentRoot<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DeleteBook(int bookId)
+    {
+        try
+        {
+            await _mediator.Send(new DeleteBookCommand
+            {
+                Id = bookId
+            });
+        }
+        catch (NotFoundException)
+        {
+            return NotFound(new List<Error>()
+            {
+                new()
+                {
+                    Detail = "No record of a Book with the provided ID."
+                }
+            });
+        }
+       
+        return NoContent();
     }
 }
