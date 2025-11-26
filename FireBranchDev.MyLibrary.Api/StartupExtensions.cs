@@ -1,11 +1,14 @@
 ﻿using FireBranchDev.MyLibrary.Application;
 using FireBranchDev.MyLibrary.Persistence;
 using JsonApiSerializer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.ObjectPool;
+using Microsoft.IdentityModel.Tokens;
 using System.Buffers;
-
+using System.Security.Claims;
 namespace FireBranchDev.MyLibrary.Api;
 
 public static class StartupExtensions
@@ -13,6 +16,28 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         // Add services to the container.
+        var auth0Domain = builder.Configuration["Auth0:Domain"] ?? throw new NullReferenceException("Auth0:Domain missing from the builder configuration.");
+        var auth0Url = $"https://{auth0Domain}/";
+
+        // Security related services
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.Authority = auth0Url;
+            options.Audience = builder.Configuration["Auth0:Audience"];
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                NameClaimType = ClaimTypes.NameIdentifier
+            };
+        });
+
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("create:book", policy =>
+            {
+                policy.Requirements.Add(new ScopeRequirement("create:book", auth0Url));
+            });
+
+        builder.Services.AddSingleton<IAuthorizationHandler, ScopeRequirementHandler>();
 
         builder.Services.AddApplicationServices();
         builder.Services.AddPersistenceServices(builder.Configuration);
@@ -39,7 +64,10 @@ public static class StartupExtensions
         });
 
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
+        builder.Services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+        });
 
         return builder.Build();
     }
@@ -59,6 +87,7 @@ public static class StartupExtensions
 
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
         app.UseAuthorization();
 
         app.MapControllers();

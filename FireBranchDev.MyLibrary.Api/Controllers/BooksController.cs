@@ -8,6 +8,7 @@ using FireBranchDev.MyLibrary.Application.Features.Books.Commands.UpdateBook;
 using FireBranchDev.MyLibrary.Application.Features.Books.Queries.GetBook;
 using JsonApiSerializer.JsonApi;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CreateBookDto = FireBranchDev.MyLibrary.Api.JsonApi.Book.CreateBook.CreateBookDto;
 using UpdateBookDto = FireBranchDev.MyLibrary.Api.JsonApi.Book.UpdateBook.UpdateBookDto;
@@ -20,7 +21,7 @@ public class BooksController(IMediator mediator, IMapper mapper) : JsonApiContro
     private readonly IMediator _mediator = mediator;
     private readonly IMapper _mapper = mapper;
 
-    [HttpPost(Name = "AddBook")]
+    [HttpPost(Name = "AddBook"), Authorize(Policy = "create:book")]
     [ProducesDefaultResponseType(typeof(DocumentRoot<BookDto>))]
     [ProducesErrorResponseType(typeof(DocumentRoot<BookDto>))]
     [ProducesResponseType(StatusCodes.Status201Created)]
