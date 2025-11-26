@@ -1,9 +1,11 @@
-﻿using FireBranchDev.MyLibrary.Api.JsonApi.Book;
+﻿using AutoMapper;
+using FireBranchDev.MyLibrary.Api.JsonApi.Book;
 using FireBranchDev.MyLibrary.Application.Exceptions;
 using FireBranchDev.MyLibrary.Application.Features.Book.Queries.GetBooksList;
 using FireBranchDev.MyLibrary.Application.Features.Books.Commands.CreateBook;
 using FireBranchDev.MyLibrary.Application.Features.Books.Commands.DeleteBook;
 using FireBranchDev.MyLibrary.Application.Features.Books.Commands.UpdateBook;
+using FireBranchDev.MyLibrary.Application.Features.Books.Queries.GetBook;
 using JsonApiSerializer.JsonApi;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -13,9 +15,10 @@ using UpdateBookDto = FireBranchDev.MyLibrary.Api.JsonApi.Book.UpdateBook.Update
 namespace FireBranchDev.MyLibrary.Api.Controllers;
 
 [Route("api/[controller]")]
-public class BooksController(IMediator mediator) : JsonApiControllerBase
+public class BooksController(IMediator mediator, IMapper mapper) : JsonApiControllerBase
 {
     private readonly IMediator _mediator = mediator;
+    private readonly IMapper _mapper = mapper;
 
     [HttpPost(Name = "AddBook")]
     [ProducesDefaultResponseType(typeof(DocumentRoot<BookDto>))]
@@ -222,5 +225,38 @@ public class BooksController(IMediator mediator) : JsonApiControllerBase
         }
        
         return NoContent();
+    }
+
+    [HttpGet("{id:int}", Name = "GetBook")]
+    [ProducesDefaultResponseType(typeof(DocumentRoot<BookDto>))]
+    [ProducesErrorResponseType(typeof(DocumentRoot<BookDto>))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<DocumentRoot<BookDto>>> GetBook(int id)
+    {
+        try
+        {
+            var book = await _mediator.Send(new GetBookQuery
+            {
+                Id = id
+            });
+
+            return DocumentRoot.Create(_mapper.Map<BookDto>(book));
+        }
+        catch (NotFoundException)
+        {
+            return NotFound(new Error()
+            {
+                Detail = "No record of a book with the provided ID."
+            });
+        }
+        catch
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new Error()
+            {
+                Detail = "Server encountered a internal error."
+            });
+        }
     }
 }
